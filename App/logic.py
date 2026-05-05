@@ -154,6 +154,7 @@ def load_horsepower_tree(catalog, sale):
     return catalog
 
 
+# Requerimientos
 
 def req_1(catalog):
     """
@@ -202,18 +203,33 @@ def req_6(catalog):
     pass
 
 
-# Funciones para medir tiempos de ejecucion
+# Ordenamiento de carga
+
+def compare_sales_load(s1, s2):
+    """
+    Orden de carga pedido por el enunciado:
+    1. Year ASC
+    2. Base Price ASC
+    3. Model ASC
+    """
+    if s1["year"] < s2["year"]:
+        return True
+    if s1["year"] > s2["year"]:
+        return False
+
+    if s1["base_price"] < s2["base_price"]:
+        return True
+    if s1["base_price"] > s2["base_price"]:
+        return False
+
+    return s1["model"] < s2["model"]
+
+
+# Funciones de tiempo
 
 def get_time():
-    """
-    devuelve el instante tiempo de procesamiento en milisegundos
-    """
-    return float(time.perf_counter()*1000)
+    return float(time.perf_counter() * 1000)
 
 
 def delta_time(start, end):
-    """
-    devuelve la diferencia entre tiempos de procesamiento muestreados
-    """
-    elapsed = float(end - start)
-    return elapsed
+    return float(end - start)
