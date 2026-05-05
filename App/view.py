@@ -1,12 +1,12 @@
 import sys
-
+from tabulate import tabulate
+from App import logic as l
 
 def new_logic():
     """
         Se crea una instancia del controlador
     """
-    #TODO: Llamar la función de la lógica donde se crean las estructuras de datos
-    pass
+    return l.new_logic()
 
 def print_menu():
     print("Bienvenido")
@@ -21,18 +21,60 @@ def print_menu():
 
 def load_data(control):
     """
-    Carga los datos
+    Carga de datos
     """
-    #TODO: Realizar la carga de datos
-    pass
 
+    while True:
+        print("Ingrese el tamaño del archivo:")
+        print("1) test")
+        print("2) small")
+        print("3) medium")
+        print("4) large")
+        opcion = input("Seleccione una opción: ").strip().lower()
 
-def print_data(control, id):
-    """
-        Función que imprime un dato dado su ID
-    """
-    #TODO: Realizar la función para imprimir un elemento
-    pass
+        match opcion:
+            case("1"):
+                opcion = "test"
+                break
+            case("2"):
+                opcion = "small"
+                break
+            case("3"):
+                opcion = "medium"
+                break
+            case("4"):
+                opcion = "large"
+                break
+            case _:
+                print("Opción inválida. Debe ingresar un número entre 1 y 4.")
+
+    catalog, dtime, total, first_five, last_five = l.load_data(control, opcion)
+
+    print("\n" + "=" * 80)
+    print("RESUMEN DE CARGA")
+    print("=" * 80)
+
+    resumen = [
+        ["Archivo cargado", f"mercedes_sales_{opcion}.csv"],
+        ["Tiempo de carga (ms)", round(dtime, 2)],
+        ["Total de ventas cargadas", total]
+    ]
+
+    print(tabulate(resumen, headers=["Campo", "Valor"], tablefmt="fancy_grid"))
+
+    print("\n" + "=" * 80)
+    print("PRIMERAS 5 VENTAS")
+    print("=" * 80)
+
+    print(tabulate(first_five, headers="keys", tablefmt="fancy_grid"))
+
+    print("\n" + "=" * 80)
+    print("ÚLTIMAS 5 VENTAS")
+    print("=" * 80)
+
+    print(tabulate(last_five, headers="keys", tablefmt="fancy_grid"))
+
+    return catalog
 
 def print_req_1(control):
     """

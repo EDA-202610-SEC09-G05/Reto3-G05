@@ -73,18 +73,26 @@ def flip_colors(node_rbt):
     flip_node_color(node_rbt['right'])
     return node_rbt
 
-def insert_node(root, key, value):
+def insert_node(root, key, value, repeated=False):
     if root is None:
+        if repeated:
+            return rn.new_node(key, [value])
         return rn.new_node(key, value)
 
     cmp = default_compare(key, root)
 
     if cmp == 0:
-        root['value'] = value
+        if repeated:
+            if isinstance(root['value'], list):
+                root['value'].append(value)
+            else:
+                root['value'] = [root['value'], value]
+        else:
+            root['value'] = value
     elif cmp < 0:
-        root['left'] = insert_node(root['left'], key, value)
+        root['left'] = insert_node(root['left'], key, value, repeated)
     else:
-        root['right'] = insert_node(root['right'], key, value)
+        root['right'] = insert_node(root['right'], key, value, repeated)
 
     if is_red(root['right']) and not is_red(root['left']):
         root = rotate_left(root)
@@ -98,8 +106,8 @@ def insert_node(root, key, value):
     root['size'] = 1 + size_tree(root['left']) + size_tree(root['right'])
     return root
 
-def put(my_rbt, key, value):
-    my_rbt['root'] = insert_node(my_rbt['root'], key, value)
+def put(my_rbt, key, value, repeated=False):
+    my_rbt['root'] = insert_node(my_rbt['root'], key, value, repeated)
     my_rbt['root']['color'] = rn.BLACK
     return my_rbt
 

@@ -8,24 +8,32 @@ def default_compare(key1, key2):
     else:
         return 1
     
-def insert_node(root, key, value):
+def insert_node(root, key, value, repeated=False):
     if root is None:
+        if repeated:
+            return bn.new_node(key, [value])
         return bn.new_node(key, value)
 
     cmp = default_compare(key, root['key'])
 
     if cmp == 0:
-        root['value'] = value
+        if repeated:
+            if isinstance(root['value'], list):
+                root['value'].append(value)
+            else:
+                root['value'] = [root['value'], value]
+        else:
+            root['value'] = value
     elif cmp < 0:
-        root['left'] = insert_node(root['left'], key, value)
+        root['left'] = insert_node(root['left'], key, value, repeated)
     else:
-        root['right'] = insert_node(root['right'], key, value)
+        root['right'] = insert_node(root['right'], key, value, repeated)
 
     root['size'] = 1 + size_tree(root['left']) + size_tree(root['right'])
     return root
 
-def put(my_bst, key, value):
-    my_bst['root'] = insert_node(my_bst['root'], key, value)
+def put(my_bst, key, value, repeated=False):
+    my_bst['root'] = insert_node(my_bst['root'], key, value, repeated)
     return my_bst
 
 def get_node(root, key):
@@ -173,5 +181,8 @@ def values(my_bst, low, high):
     result = []
     values_range(my_bst['root'], low, high, result)
     return result
+
+
+
 
 
