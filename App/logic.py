@@ -241,12 +241,62 @@ def req_4(catalog):
     pass
 
 
-def req_5(catalog):
-    """
-    Retorna el resultado del requerimiento 5
-    """
-    # TODO: Modificar el requerimiento 5
-    pass
+def req_5(catalog, hp_ref, delta, top_n):
+    start_time = get_time()
+
+    min_hp = hp_ref - delta
+    max_hp = hp_ref + delta
+
+    color_stats = {}
+    total_vehicles = 0
+
+    for sale in catalog["all_sales"]["elements"]:
+        hp = int(sale["horsepower"])
+        if hp < min_hp or hp > max_hp:
+            continue
+
+        color = sale["color"]
+        total_vehicles += 1
+
+        if color not in color_stats:
+            color_stats[color] = {
+                "count": 0,
+                "hp_sum": 0
+            }
+
+        color_stats[color]["count"] += 1
+        color_stats[color]["hp_sum"] += hp
+
+    result_tree = rbt.new_map()
+
+    for color, data in color_stats.items():
+        count = data["count"]
+        avg_hp = data["hp_sum"] / count
+        key = (-count, -avg_hp, color)
+        rbt.put(result_tree, key, {
+            "color": color,
+            "count": count,
+            "avg_hp": avg_hp
+        })
+
+    ordered = al.new_list()
+
+    keys_sl = rbt.key_set(result_tree)
+    keys = sl.to_py_list(keys_sl)
+
+    for key in keys:
+        al.add_last(ordered, rbt.get(result_tree, key))
+
+    if al.size(ordered) > top_n:
+        ordered = al.sub_list(ordered, 0, top_n)
+
+    exec_time = delta_time(start_time, get_time())
+
+    return {
+        "time_ms": exec_time,
+        "total_vehicles": total_vehicles,
+        "top_colors": ordered
+    }
 
 def req_6(catalog):
     """

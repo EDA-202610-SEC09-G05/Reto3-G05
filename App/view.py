@@ -197,11 +197,57 @@ def print_req_4(control):
 
 
 def print_req_5(control):
-    """
-        Función que imprime la solución del Requerimiento 5 en consola
-    """
-    # TODO: Imprimir el resultado del requerimiento 5
-    pass
+    print("\n" + "=" * 80)
+    print("REQUERIMIENTO 5: Top N de colores con más ventas por rango de horsepower")
+    print("=" * 80)
+
+    hp_ref = int(input("Ingrese el horsepower de referencia: "))
+    delta = int(input("Ingrese el delta de horsepower: "))
+    top_n = int(input("Ingrese la cantidad N de colores a mostrar: "))
+
+    result = l.req_5(control, hp_ref, delta, top_n)
+
+    print("\n" + "=" * 80)
+    print("RESUMEN DEL REQUERIMIENTO 5")
+    print("=" * 80)
+
+    resumen = [
+        ["Horsepower de referencia", hp_ref],
+        ["Delta de horsepower", delta],
+        ["Rango considerado", f"[{hp_ref - delta}, {hp_ref + delta}]"],
+        ["Tiempo de ejecución (ms)", round(result["time_ms"], 2)],
+        ["Total de vehículos en el rango", result["total_vehicles"]]
+    ]
+
+    print(tabulate(resumen, headers=["Campo", "Valor"], tablefmt="fancy_grid"))
+
+    colors_list = result["top_colors"]
+    total = l.al.size(colors_list)
+
+    print("\n" + "=" * 80)
+    print("TOP COLORES")
+    print("=" * 80)
+
+    if total == 0:
+        print("No se encontraron vehículos en el rango de horsepower.")
+        return
+
+    table = []
+    for i in range(total):
+        item = l.al.get_element(colors_list, i)
+        table.append([
+            item["color"],
+            item["count"],
+            round(item["avg_hp"], 2)
+        ])
+
+    headers = [
+        "Color",
+        "Número de vehículos vendidos",
+        "Horsepower promedio"
+    ]
+
+    print(tabulate(table, headers=headers, tablefmt="fancy_grid"))
 
 
 def print_req_6(control):
