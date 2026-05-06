@@ -85,8 +85,6 @@ def print_req_1(control):
 
 
 def print_req_2(control):
-
-
     print("\n" + "=" * 80)
     print("REQUERIMIENTO 2: Ventas por tipo de combustible y rango de horsepower")
     print("=" * 80)
@@ -113,29 +111,8 @@ def print_req_2(control):
 
     print(tabulate(resumen, headers=["Campo", "Valor"], tablefmt="fancy_grid"))
 
-    if result["total_sales"] == 0:
-        print("\nNo se encontraron ventas que cumplan los criterios.")
-        return
-
-    print("\n" + "=" * 80)
-    print("VENTAS FILTRADAS")
-    print("=" * 80)
-
-    table = []
-    sales_list = result["sales"]  
-
-    for i in range(l.al.size(sales_list)):
-        sale = l.al.get_element(sales_list, i)
-
-        table.append([
-            sale["model"],
-            sale["year"],
-            sale["fuel_type"],
-            sale["color"],
-            sale["base_price"],
-            sale["horsepower"],
-            sale["turbo"]
-        ])
+    sales_list = result["sales"]
+    shown = l.al.size(sales_list)
 
     headers = [
         "Model",
@@ -147,7 +124,60 @@ def print_req_2(control):
         "Turbo"
     ]
 
-    print(tabulate(table, headers=headers, tablefmt="fancy_grid"))
+    print("\n" + "=" * 80)
+    print("VENTAS FILTRADAS")
+    print("=" * 80)
+
+    if result["total_sales"] <= 12:
+        table = []
+        for i in range(shown):
+            sale = l.al.get_element(sales_list, i)
+            table.append([
+                sale["model"],
+                sale["year"],
+                sale["fuel_type"],
+                sale["color"],
+                sale["base_price"],
+                sale["horsepower"],
+                sale["turbo"]
+            ])
+        print(tabulate(table, headers=headers, tablefmt="fancy_grid"))
+    else:
+        print("\n" + "-" * 80)
+        print("PRIMERAS 6 VENTAS")
+        print("-" * 80)
+
+        first_table = []
+        for i in range(6):
+            sale = l.al.get_element(sales_list, i)
+            first_table.append([
+                sale["model"],
+                sale["year"],
+                sale["fuel_type"],
+                sale["color"],
+                sale["base_price"],
+                sale["horsepower"],
+                sale["turbo"]
+            ])
+        print(tabulate(first_table, headers=headers, tablefmt="fancy_grid"))
+
+        print("\n" + "-" * 80)
+        print("ÚLTIMAS 6 VENTAS")
+        print("-" * 80)
+
+        last_table = []
+        for i in range(6, 12):
+            sale = l.al.get_element(sales_list, i)
+            last_table.append([
+                sale["model"],
+                sale["year"],
+                sale["fuel_type"],
+                sale["color"],
+                sale["base_price"],
+                sale["horsepower"],
+                sale["turbo"]
+            ])
+        print(tabulate(last_table, headers=headers, tablefmt="fancy_grid"))
 
 
 def print_req_3(control):
