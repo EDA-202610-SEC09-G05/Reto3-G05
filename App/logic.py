@@ -236,6 +236,9 @@ def req_3(catalog):
 def req_4(catalog):
     """
     Retorna el resultado del requerimiento 4
+    
+    USAR COLAS DE PRIORIDAD
+    
     """
     # TODO: Modificar el requerimiento 4
     pass
@@ -301,6 +304,9 @@ def req_5(catalog, hp_ref, delta, top_n):
 def req_6(catalog):
     """
     Retorna el resultado del requerimiento 6
+    
+    OPCIONAL USAR COALS DE PRIORIDAD 
+    
     """
     # TODO: Modificar el requerimiento 6
     pass
