@@ -85,11 +85,69 @@ def print_req_1(control):
 
 
 def print_req_2(control):
-    """
-        Función que imprime la solución del Requerimiento 2 en consola
-    """
-    # TODO: Imprimir el resultado del requerimiento 2
-    pass
+
+
+    print("\n" + "=" * 80)
+    print("REQUERIMIENTO 2: Ventas por tipo de combustible y rango de horsepower")
+    print("=" * 80)
+
+    fuel_type = input("Ingrese el tipo de combustible: ").strip()
+    min_hp = int(input("Ingrese el horsepower mínimo: "))
+    max_hp = int(input("Ingrese el horsepower máximo: "))
+
+    result = l.req_2(control, fuel_type, min_hp, max_hp)
+
+    print("\n" + "=" * 80)
+    print("RESUMEN DEL REQUERIMIENTO 2")
+    print("=" * 80)
+
+    resumen = [
+        ["Tipo de combustible", fuel_type],
+        ["Horsepower mínimo", min_hp],
+        ["Horsepower máximo", max_hp],
+        ["Tiempo de ejecución (ms)", round(result["time_ms"], 2)],
+        ["Total de ventas encontradas", result["total_sales"]],
+        ["Promedio de precio (USD)", round(result["avg_price"], 2)],
+        ["Promedio de horsepower", round(result["avg_horsepower"], 2)]
+    ]
+
+    print(tabulate(resumen, headers=["Campo", "Valor"], tablefmt="fancy_grid"))
+
+    if result["total_sales"] == 0:
+        print("\nNo se encontraron ventas que cumplan los criterios.")
+        return
+
+    print("\n" + "=" * 80)
+    print("VENTAS FILTRADAS")
+    print("=" * 80)
+
+    table = []
+    sales_list = result["sales"]  
+
+    for i in range(l.al.size(sales_list)):
+        sale = l.al.get_element(sales_list, i)
+
+        table.append([
+            sale["model"],
+            sale["year"],
+            sale["fuel_type"],
+            sale["color"],
+            sale["base_price"],
+            sale["horsepower"],
+            sale["turbo"]
+        ])
+
+    headers = [
+        "Model",
+        "Year",
+        "Fuel Type",
+        "Color",
+        "Base Price (USD)",
+        "Horsepower",
+        "Turbo"
+    ]
+
+    print(tabulate(table, headers=headers, tablefmt="fancy_grid"))
 
 
 def print_req_3(control):

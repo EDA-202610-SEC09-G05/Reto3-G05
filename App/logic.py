@@ -7,6 +7,7 @@ from DataStructures.Map import map_separate_chaining as mc
 from DataStructures.Tree import red_black_tree as rbt
 from DataStructures.List import array_list as al
 from DataStructures.List import sort as sort
+from DataStructures.List import single_linked_list as sl
 
 # Creacion del catalogo
 
@@ -164,12 +165,64 @@ def req_1(catalog):
     pass
 
 
-def req_2(catalog):
-    """
-    Retorna el resultado del requerimiento 2
-    """
-    # TODO: Modificar el requerimiento 2
-    pass
+def req_2(catalog, fuel_type, min_hp, max_hp):
+    start_time = get_time()
+
+    results_tree = rbt.new_map()
+    total_price = 0
+    total_hp = 0
+    count = 0
+
+    for sale in catalog["all_sales"]["elements"]:
+        if sale["fuel_type"].lower() != fuel_type.lower():
+            continue
+
+        horsepower = int(sale["horsepower"])
+        if horsepower < min_hp or horsepower > max_hp:
+            continue
+
+        base_price = float(sale["base_price"])
+        model = sale["model"]
+
+        key = (horsepower, base_price, model)
+        rbt.put(results_tree, key, sale)
+
+        total_price += base_price
+        total_hp += horsepower
+        count += 1
+
+    ordered_sales = al.new_list()
+
+    keys_sl = rbt.key_set(results_tree)
+    keys = sl.to_py_list(keys_sl)
+
+    for key in keys:
+        sale = rbt.get(results_tree, key)
+        al.add_last(ordered_sales, sale)
+
+    avg_price = total_price / count if count > 0 else 0
+    avg_hp = total_hp / count if count > 0 else 0
+    exec_time = delta_time(start_time, get_time())
+
+    if al.size(ordered_sales) > 12:
+        first = al.sub_list(ordered_sales, 0, 6)
+        last = al.sub_list(ordered_sales, al.size(ordered_sales) - 6, 6)
+
+        trimmed = al.new_list()
+        for i in range(al.size(first)):
+            al.add_last(trimmed, al.get_element(first, i))
+        for i in range(al.size(last)):
+            al.add_last(trimmed, al.get_element(last, i))
+
+        ordered_sales = trimmed
+
+    return {
+        "time_ms": exec_time,
+        "total_sales": count,
+        "avg_price": avg_price,
+        "avg_horsepower": avg_hp,
+        "sales": ordered_sales
+    }
 
 
 def req_3(catalog):
