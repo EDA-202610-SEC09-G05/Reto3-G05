@@ -79,27 +79,30 @@ def load_data(control):
 
 
 def print_req_1(control):
-    """
-    Función que imprime la solución del Requerimiento 1 en consola.
-    """
+    print("\n" + "=" * 80)
+    print("REQUERIMIENTO 1: Ventas por modelo y rango de precio")
+    print("=" * 80)
 
     while True:
-        model = input("Ingrese el modelo a consultar: ").strip().lower()
-        price_min = input("Ingrese el precio mínimo: ")
-        price_max = input("Ingrese el precio máximo: ")
+        model = input("Ingrese el modelo a consultar: ").strip()
 
-        if price_min <= price_max and price_min.isdigit() and price_max.isdigit() and mc.contains(control["model_index"], model):
-            price_min = float(price_min)
-            price_max = float(price_max)
-            break
+        try:
+            price_min = float(input("Ingrese el precio mínimo: "))
+            price_max = float(input("Ingrese el precio máximo: "))
+        except ValueError:
+            print("Valor inválido. Ingrese precios numéricos.")
+            continue
 
-        else:
-            print("Valor inválido. Ingrese rango de precios numéricos o el modelo no existe.\n")
+        if price_min > price_max or price_min < 0 or price_max < 0:
+            print("Rango de precios inválido. Intente nuevamente.")
+            continue
+
+        break
 
     resumen, ventas = l.req_1(control, model, price_min, price_max)
 
     print("\n" + "=" * 80)
-    print("RESULTADO REQUERIMIENTO 1")
+    print("RESUMEN DEL REQUERIMIENTO 1")
     print("=" * 80)
 
     print(tabulate(resumen, headers=["Campo", "Valor"], tablefmt="fancy_grid"))
@@ -109,11 +112,10 @@ def print_req_1(control):
     print("=" * 80)
 
     if len(ventas) == 0:
-        print("No se encontraron ventas para los parámetros ingresados.")
-    else:
-        print(tabulate(ventas, headers="keys", tablefmt="fancy_grid"))
+        print("No se encontraron ventas para el modelo y rango especificados.")
+        return
 
-    return control
+    print(tabulate(ventas, headers="keys", tablefmt="fancy_grid"))
 
 
 def print_req_2(control):
@@ -213,11 +215,109 @@ def print_req_2(control):
 
 
 def print_req_3(control):
-    """
-        Función que imprime la solución del Requerimiento 3 en consola
-    """
-    # TODO: Imprimir el resultado del requerimiento 3
-    pass
+    print("\n" + "=" * 80)
+    print("REQUERIMIENTO 3: Ventas por año, tipo de combustible y rango de precio")
+    print("=" * 80)
+
+    year = int(input("Ingrese el año: "))
+    fuel_type = input("Ingrese el tipo de combustible: ").strip()
+    min_price = float(input("Ingrese el precio mínimo (USD): "))
+    max_price = float(input("Ingrese el precio máximo (USD): "))
+
+    result = l.req_3(control, year, fuel_type, min_price, max_price)
+
+    print("\n" + "=" * 80)
+    print("RESUMEN DEL REQUERIMIENTO 3")
+    print("=" * 80)
+
+    resumen = [
+        ["Año", year],
+        ["Tipo de combustible", fuel_type],
+        ["Precio mínimo (USD)", min_price],
+        ["Precio máximo (USD)", max_price],
+        ["Tiempo de ejecución (ms)", round(result["time_ms"], 2)],
+        ["Total de ventas encontradas", result["total_sales"]],
+        ["Promedio de precio (USD)", round(result["avg_price"], 2)]
+    ]
+
+    print(tabulate(resumen, headers=["Campo", "Valor"], tablefmt="fancy_grid"))
+
+    sales_list = result["sales"]
+    total_real = result["total_sales"]
+    total_mostrar = l.al.size(sales_list)
+
+    print("\n" + "=" * 80)
+    print("VENTAS FILTRADAS")
+    print("=" * 80)
+
+    if total_mostrar == 0:
+        print("No se encontraron ventas que cumplan los criterios.")
+        return
+
+    headers = [
+        "Model",
+        "Year",
+        "Fuel Type",
+        "Color",
+        "Base Price (USD)",
+        "Horsepower",
+        "Turbo"
+    ]
+
+    if total_real <= 12:
+        table = []
+        for i in range(total_mostrar):
+            sale = l.al.get_element(sales_list, i)
+            table.append([
+                sale["model"],
+                sale["year"],
+                sale["fuel_type"],
+                sale["color"],
+                sale["base_price"],
+                sale["horsepower"],
+                sale["turbo"]
+            ])
+
+        print(tabulate(table, headers=headers, tablefmt="fancy_grid"))
+
+    else:
+        print("\n" + "-" * 80)
+        print("PRIMERAS 6 VENTAS")
+        print("-" * 80)
+
+        first_table = []
+        for i in range(6):
+            sale = l.al.get_element(sales_list, i)
+            first_table.append([
+                sale["model"],
+                sale["year"],
+                sale["fuel_type"],
+                sale["color"],
+                sale["base_price"],
+                sale["horsepower"],
+                sale["turbo"]
+            ])
+
+        print(tabulate(first_table, headers=headers, tablefmt="fancy_grid"))
+
+        print("\n" + "-" * 80)
+        print("ÚLTIMAS 6 VENTAS")
+        print("-" * 80)
+
+        last_table = []
+        for i in range(6, 12):
+            sale = l.al.get_element(sales_list, i)
+            last_table.append([
+                sale["model"],
+                sale["year"],
+                sale["fuel_type"],
+                sale["color"],
+                sale["base_price"],
+                sale["horsepower"],
+                sale["turbo"]
+            ])
+
+        print(tabulate(last_table, headers=headers, tablefmt="fancy_grid"))
 
 
 def print_req_4(control):
@@ -330,11 +430,84 @@ def print_req_5(control):
 
 
 def print_req_6(control):
-    """
-        Función que imprime la solución del Requerimiento 6 en consola
-    """
-    # TODO: Imprimir el resultado del requerimiento 6
-    pass
+    print("\n" + "=" * 80)
+    print("REQUERIMIENTO 6: Modelos con precio base más estable")
+    print("=" * 80)
+
+    year_min = int(input("Ingrese el año inicial: "))
+    year_max = int(input("Ingrese el año final: "))
+    price_min = float(input("Ingrese el precio mínimo (USD): "))
+    price_max = float(input("Ingrese el precio máximo (USD): "))
+    m = int(input("Ingrese la cantidad M de modelos a mostrar: "))
+
+    result = l.req_6(control, year_min, year_max, price_min, price_max, m)
+
+    print("\n" + "=" * 80)
+    print("RESUMEN DEL REQUERIMIENTO 6")
+    print("=" * 80)
+
+    resumen = [
+        ["Rango de años", f"[{year_min}, {year_max}]"],
+        ["Rango de precios", f"[{price_min}, {price_max}]"],
+        ["Tiempo de ejecución (ms)", round(result["time_ms"], 2)],
+        ["Total de modelos considerados", result["total_models"]]
+    ]
+
+    print(tabulate(resumen, headers=["Campo", "Valor"], tablefmt="fancy_grid"))
+
+    models_list = result["models"]
+
+    if l.al.size(models_list) == 0:
+        print("\nNo se encontraron modelos que cumplan los criterios.")
+        return
+
+    print("\n" + "=" * 80)
+    print("MODELOS MÁS ESTABLES")
+    print("=" * 80)
+
+    table = []
+
+    for i in range(l.al.size(models_list)):
+        stat = l.al.get_element(models_list, i)
+        table.append([
+            stat["model"],
+            stat["count"],
+            round(stat["mean"], 2),
+            round(stat["std"], 2),
+            round(stat["stability"], 6),
+            round(stat["avg_hp"], 2)
+        ])
+
+    headers = [
+        "Modelo",
+        "Ventas",
+        "Precio promedio (μ)",
+        "Desviación estándar (σ)",
+        "Estabilidad (σ/μ)",
+        "Horsepower promedio"
+    ]
+
+    print(tabulate(table, headers=headers, tablefmt="fancy_grid"))
+
+    print("\n" + "=" * 80)
+    print("VENTA REPRESENTATIVA POR MODELO")
+    print("=" * 80)
+
+    for i in range(l.al.size(models_list)):
+        stat = l.al.get_element(models_list, i)
+        sale = stat["representative"]
+
+        print(f"\nModelo: {stat['model']}")
+        print(tabulate([[
+            sale["model"],
+            sale["year"],
+            sale["fuel_type"],
+            sale["base_price"],
+            sale["horsepower"],
+            sale["turbo"]
+        ]],
+        headers=["Model", "Year", "Fuel Type", "Base Price (USD)", "Horsepower", "Turbo"],
+        tablefmt="fancy_grid"))
 
 # Se crea la lógica asociado a la vista
 control = new_logic()
@@ -367,7 +540,7 @@ def main():
         elif int(inputs) == 5:
             print_req_5(control)
 
-        elif int(inputs) == 5:
+        elif int(inputs) == 6:
             print_req_6(control)
 
         elif int(inputs) == 7:

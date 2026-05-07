@@ -202,11 +202,9 @@ def load_horsepower_tree(catalog, sale):
 # Requerimientos
 
 def req_1(catalog, model, price_min, price_max):
-    """
-    Retorna el resultado del requerimiento 1
-    """
     inicio = get_time()
 
+    model = model.lower()
     model_tree = mc.get(catalog["model_index"], model)
 
     ventas_filtradas = al.new_list()
@@ -214,7 +212,7 @@ def req_1(catalog, model, price_min, price_max):
 
     if model_tree is not None:
         grupos = rbt.values(model_tree, price_min, price_max)
-        
+
         for grupo in grupos:
             for sale in grupo:
                 al.add_last(ventas_filtradas, sale)
@@ -223,7 +221,6 @@ def req_1(catalog, model, price_min, price_max):
     sort.merge_sort(ventas_filtradas, compare_sales_req1, al)
 
     total = al.size(ventas_filtradas)
-
     promedio_precio = suma_precios / total if total > 0 else 0
 
     ventas_mostrar = get_first_last_sales(ventas_filtradas, 6)
@@ -233,7 +230,7 @@ def req_1(catalog, model, price_min, price_max):
     resumen = [
         ["Tiempo de ejecución (ms)", round(dtime, 2)],
         ["Total unidades vendidas", total],
-        ["Promedio de precio", round(promedio_precio, 2)]
+        ["Promedio de precio (USD)", round(promedio_precio, 2)]
     ]
 
     return resumen, format_data(ventas_mostrar)
@@ -298,12 +295,48 @@ def req_2(catalog, fuel_type, min_hp, max_hp):
     }
 
 
-def req_3(catalog):
-    """
-    Retorna el resultado del requerimiento 3
-    """
-    # TODO: Modificar el requerimiento 3
-    pass
+def req_3(catalog, year, fuel_type, min_price, max_price):
+    start_time = get_time()
+
+    results_tree = rbt.new_map()
+    total_price = 0
+    count = 0
+
+    for sale in catalog["all_sales"]["elements"]:
+        if sale["year"] != year:
+            continue
+
+        if sale["fuel_type"].lower() != fuel_type.lower():
+            continue
+
+        price = sale["base_price"]
+        if price < min_price or price > max_price:
+            continue
+
+        horsepower = sale["horsepower"]
+        turbo_flag = 0 if sale["turbo"] == "Yes" else 1
+
+        key = (-price, -horsepower, turbo_flag)
+        rbt.put(results_tree, key, sale)
+
+        total_price += price
+        count += 1
+
+    ordered_sales = al.new_list()
+
+    keys = rbt.key_set(results_tree)["elements"]
+    for key in keys:
+        al.add_last(ordered_sales, rbt.get(results_tree, key))
+
+    avg_price = total_price / count if count > 0 else 0
+    exec_time = delta_time(start_time, get_time())
+
+    return {
+        "time_ms": exec_time,
+        "total_sales": count,
+        "avg_price": avg_price,
+        "sales": ordered_sales
+    }
 
 
 
@@ -404,15 +437,93 @@ def req_5(catalog, hp_ref, delta, top_n):
         "top_colors": ordered
     }
 
-def req_6(catalog):
-    """
-    Retorna el resultado del requerimiento 6
-    
-    OPCIONAL USAR COALS DE PRIORIDAD 
-    
-    """
-    # TODO: Modificar el requerimiento 6
-    pass
+def req_6(catalog, year_min, year_max, price_min, price_max, m):
+    start_time = get_time()
+
+    model_data = {}
+
+    for sale in catalog["all_sales"]["elements"]:
+        year = sale["year"]
+        price = sale["base_price"]
+
+        if year < year_min or year > year_max:
+            continue
+        if price < price_min or price > price_max:
+            continue
+
+        model = sale["model"]
+
+        if model not in model_data:
+            model_data[model] = {
+                "prices": [],
+                "horsepower_sum": 0,
+                "count": 0
+            }
+
+        model_data[model]["prices"].append(price)
+        model_data[model]["horsepower_sum"] += sale["horsepower"]
+        model_data[model]["count"] += 1
+
+    heap = pq.new_heap(True)
+    total_models = 0
+
+    for model, data in model_data.items():
+        prices = data["prices"]
+        n = data["count"]
+
+        if n == 0:
+            continue
+
+        mean = sum(prices) / n
+        if mean == 0:
+            continue
+
+        variance = sum((p - mean) ** 2 for p in prices) / n
+        std_dev = variance ** 0.5
+        stability = std_dev / mean
+
+        closest_sale = None
+        min_diff = float("inf")
+
+        for sale in catalog["all_sales"]["elements"]:
+            if sale["model"] == model:
+                diff = abs(sale["base_price"] - mean)
+                if diff < min_diff:
+                    min_diff = diff
+                    closest_sale = sale
+
+        avg_hp = data["horsepower_sum"] / n
+
+        pq.insert(
+            heap,
+            stability,
+            {
+                "model": model,
+                "count": n,
+                "mean": mean,
+                "std": std_dev,
+                "stability": stability,
+                "avg_hp": avg_hp,
+                "representative": closest_sale
+            }
+        )
+
+        total_models += 1
+
+    result = al.new_list()
+    extracted = 0
+
+    while extracted < m and not pq.is_empty(heap):
+        al.add_last(result, pq.remove(heap))
+        extracted += 1
+
+    exec_time = delta_time(start_time, get_time())
+
+    return {
+        "time_ms": exec_time,
+        "total_models": total_models,
+        "models": result
+    }
 
 
 # Ordenamiento de carga
