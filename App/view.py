@@ -1,6 +1,7 @@
 import sys
 from tabulate import tabulate
 from App import logic as l
+from DataStructures.Map import map_separate_chaining as mc
 
 def new_logic():
     """
@@ -76,12 +77,43 @@ def load_data(control):
 
     return catalog
 
+
 def print_req_1(control):
     """
-        Función que imprime la solución del Requerimiento 1 en consola
+    Función que imprime la solución del Requerimiento 1 en consola.
     """
-    # TODO: Imprimir el resultado del requerimiento 1
-    pass
+
+    while True:
+        model = input("Ingrese el modelo a consultar: ").strip().lower()
+        price_min = input("Ingrese el precio mínimo: ")
+        price_max = input("Ingrese el precio máximo: ")
+
+        if price_min <= price_max and price_min.isdigit() and price_max.isdigit() and mc.contains(control["model_index"], model):
+            price_min = float(price_min)
+            price_max = float(price_max)
+            break
+
+        else:
+            print("Valor inválido. Ingrese rango de precios numéricos o el modelo no existe.\n")
+
+    resumen, ventas = l.req_1(control, model, price_min, price_max)
+
+    print("\n" + "=" * 80)
+    print("RESULTADO REQUERIMIENTO 1")
+    print("=" * 80)
+
+    print(tabulate(resumen, headers=["Campo", "Valor"], tablefmt="fancy_grid"))
+
+    print("\n" + "=" * 80)
+    print("VENTAS FILTRADAS")
+    print("=" * 80)
+
+    if len(ventas) == 0:
+        print("No se encontraron ventas para los parámetros ingresados.")
+    else:
+        print(tabulate(ventas, headers="keys", tablefmt="fancy_grid"))
+
+    return control
 
 
 def print_req_2(control):
@@ -189,11 +221,58 @@ def print_req_3(control):
 
 
 def print_req_4(control):
-    """
-        Función que imprime la solución del Requerimiento 4 en consola
-    """
-    # TODO: Imprimir el resultado del requerimiento 4
-    pass
+    print("\n" + "=" * 80)
+    print("REQUERIMIENTO 4: Top N modelos más vendidos por año")
+    print("=" * 80)
+
+    year = int(input("Ingrese el año a consultar: "))
+    n = int(input("Ingrese la cantidad N de modelos a mostrar: "))
+
+    resumen, modelos = l.req_4(control, year, n)
+
+    print("\n" + "=" * 80)
+    print("RESUMEN DEL REQUERIMIENTO 4")
+    print("=" * 80)
+
+    print(tabulate(resumen, headers=["Campo", "Valor"], tablefmt="fancy_grid"))
+
+    if len(modelos) == 0:
+        print("\nNo se encontraron modelos para el año consultado.")
+        return
+
+    print("\n" + "=" * 80)
+    print("TOP MODELOS MÁS VENDIDOS")
+    print("=" * 80)
+
+    table = []
+
+    for stat in modelos:
+        table.append([
+            stat["Model"],
+            stat["Vehículos vendidos"],
+            stat["Precio promedio"],
+            stat["Horsepower promedio"],
+            stat["Turbo Yes (%)"]
+        ])
+
+    headers = [
+        "Modelo",
+        "Vehículos vendidos",
+        "Precio promedio",
+        "Horsepower promedio",
+        "Turbo Yes (%)"
+    ]
+
+    print(tabulate(table, headers=headers, tablefmt="fancy_grid"))
+
+    print("\n" + "=" * 80)
+    print("MEJOR VEHÍCULO POR MODELO (MAYOR HORSEPOWER)")
+    print("=" * 80)
+
+    for stat in modelos:
+        print(f"\nModelo: {stat['Model']}")
+        print(stat["Mejor Horsepower"])
+
 
 
 def print_req_5(control):

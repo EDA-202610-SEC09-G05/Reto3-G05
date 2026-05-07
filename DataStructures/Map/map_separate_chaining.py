@@ -177,3 +177,15 @@ def rehash(my_map):
             node = node["next"]
 
     return new_map_obj
+
+def add_number(my_map, key, number):
+
+    current_value = get(my_map, key)
+
+    if current_value is None:
+        return my_map
+
+    new_value = current_value + number
+    put(my_map, key, new_value)
+
+    return my_map
