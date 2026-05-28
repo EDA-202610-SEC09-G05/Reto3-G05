@@ -12,35 +12,22 @@ from DataStructures.List import array_list as al
 from DataStructures.List import single_linked_list as sl
 from DataStructures.List import sort as sort
 
-# Creacion del catalogo
 
 def new_logic():
-    """
-    Crea el catalogo del reto 3.
-    Se usan mapas y listas del paquete DataStructures.
-    """
+
     catalog = {
-        "all_sales": al.new_list(),
-        "year_index": mc.new_map(20, 0.5),
-        "model_index": mc.new_map(200, 0.5),
-        "fuel_index": mc.new_map(20, 0.5),
-        "horsepower_tree": rbt.new_map()
+        "all_sales": al.new_list(), #array list para todas las ventas
+        "year_index": mc.new_map(20, 0.5), #year -> RBT(Base Price -> lista de ventas), el tmño inic del hash es 20 pq no hay muchos años
+        "model_index": mc.new_map(200, 0.5), #Model -> RBT(Base Price -> lista de ventas)., 200 pq hay muchos modelos y evitar colisiones
+        "fuel_index": mc.new_map(20, 0.5),  #Fuel Type -> RBT(Horsepower -> lista de ventas)    
+        "horsepower_tree": rbt.new_map() #todos los datos ordenados globalmente por horsepower
     }
     return catalog
 
 # Carga de datos
 
 def load_data(catalog, size):
-    """
-    Carga los datos del reto.
 
-    Estructura cargada:
-    - all_sales: lista con todas las ventas.
-    - year_index: Year -> RBT(Base Price -> lista de ventas).
-    - model_index: Model -> RBT(Base Price -> lista de ventas).
-    - fuel_index: Fuel Type -> RBT(Horsepower -> lista de ventas).
-    - horsepower_tree: RBT(Horsepower -> lista de ventas).
-    """
     inicio = get_time()
     url = f"./data/mercedes_sales_{size}.csv"
 
@@ -49,17 +36,18 @@ def load_data(catalog, size):
 
         for dato in filas:
 
-            sale = format_sale(dato)
-            al.add_last(catalog["all_sales"], sale)
+            sale = format_sale(dato) #limipia y formatea los datos
+            al.add_last(catalog["all_sales"], sale) # guarda la venta en la lista
 
-            load_year_index(catalog, sale)
+            load_year_index(catalog, sale) #indexa
             load_model_index(catalog, sale)
             load_fuel_index(catalog, sale)
             load_horsepower_tree(catalog, sale)
 
-    sort.merge_sort(catalog["all_sales"], compare_sales_load, al)
+    sort.merge_sort(catalog["all_sales"], compare_sales_load, al) #odena ventas por año, precio, modelo
 
     size = al.size(catalog["all_sales"])
+    #primeros y ult 5
     first_five = al.sub_list(catalog["all_sales"], 0, 5)
     last_five = al.sub_list(catalog["all_sales"], size - 5, 5)
 
@@ -68,15 +56,16 @@ def load_data(catalog, size):
     return catalog, dtime, size, format_data(first_five), format_data(last_five)
 
 
-
-# Formato y limpieza de datos
+ 
 
 def clean_text(value):
+    #verifica si el valor extá vacio o no existe y quita espacioes
     if value is None or value == "":
         return "Unknown"
     return value.strip()
 
 def clean_number(value, isint=True):
+    #si es un numero convierte entero a float, si no devuelve cero
     if value.isdigit():
         if isint:
             return int(value)
@@ -86,6 +75,7 @@ def clean_number(value, isint=True):
         return 0
     
 def format_sale(row):
+    #convierte fila en diccionario limpio, obtiene el valor del csv y lo limpia
     sale = {
         "model": clean_text(row.get("Model")),
         "year": clean_number(row.get("Year")),
@@ -100,7 +90,9 @@ def format_sale(row):
     return sale
 
 def format_data(sales):
+    #convierte datos internos
     formatted_sales = []
+    #recorre y crea diccionario
     for sale in sales["elements"]:
         formatted_sales.append({
             "Model": sale["model"],
@@ -151,6 +143,7 @@ def format_req_4_data(top_models):
 # Carga de datos individual
 
 def load_year_index(catalog, sale):
+    #busca el arbol, sino existe lo crea y lo guarda en el mapa
     year = sale["year"]
     price = sale["base_price"]
 
@@ -193,6 +186,7 @@ def load_fuel_index(catalog, sale):
 
 
 def load_horsepower_tree(catalog, sale):
+    #arbol global
     horsepower = sale["horsepower"]
 
     rbt.put(catalog["horsepower_tree"], horsepower, sale, True)

@@ -305,7 +305,7 @@ def print_req_3(control):
         print("-" * 80)
 
         last_table = []
-        for i in range(6, 12):
+        for i in range(total_mostrar - 6, total_mostrar):
             sale = l.al.get_element(sales_list, i)
             last_table.append([
                 sale["model"],
