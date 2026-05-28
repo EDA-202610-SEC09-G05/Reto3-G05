@@ -199,19 +199,23 @@ def req_1(catalog, model, price_min, price_max):
     inicio = get_time()
 
     model = model.lower()
-    model_tree = mc.get(catalog["model_index"], model)
+    model_tree = mc.get(catalog["model_index"], model) #O(1)
 
     ventas_filtradas = al.new_list()
     suma_precios = 0
 
     if model_tree is not None:
-        grupos = rbt.values(model_tree, price_min, price_max)
+        grupos = rbt.values(model_tree, price_min, price_max) # (o(log n)
+        #El árbol filtra eficientemente las ventas cuyo base_price está entre
+        #el mínimo y el máximo. Gracias a la estructura jerárquica del árbol,
+        #descartamos ramas enteras que no cumplen el rango, ahorrando muchísimo
+        #tiempo de procesamiento
 
         for grupo in grupos:
             for sale in grupo:
                 al.add_last(ventas_filtradas, sale)
                 suma_precios += sale["base_price"]
-
+    #LOS RESULTADOS VIENEN EN GRUPOS
     sort.merge_sort(ventas_filtradas, compare_sales_req1, al)
 
     total = al.size(ventas_filtradas)
@@ -249,7 +253,7 @@ def req_2(catalog, fuel_type, min_hp, max_hp):
         base_price = sale["base_price"]
         model = sale["model"]
 
-        key = (horsepower, base_price, model)
+        key = (horsepower, base_price, model) # esta tupla es una llave compuesta,
         rbt.put(results_tree, key, sale)
 
         total_price += base_price
@@ -287,7 +291,7 @@ def req_2(catalog, fuel_type, min_hp, max_hp):
         "avg_horsepower": avg_hp,
         "sales": ordered_sales
     }
-
+# $O(N + M \log M)$
 
 def req_3(catalog, year, fuel_type, min_price, max_price):
     start_time = get_time()
@@ -311,7 +315,15 @@ def req_3(catalog, year, fuel_type, min_price, max_price):
         turbo_flag = 0 if sale["turbo"] == "Yes" else 1
 
         key = (-price, -horsepower, turbo_flag)
+        #Al convertir un valor alto en un número negativo muy pequeño,
+        #el árbol lo posiciona al inicio de su recorrido.
+        #Esto nos permite obtener un orden descendente (de mayor a menor) sin necesidad
+        #de programar un comparador complejo o invertir la lista manualmente,
+        #manteniendo la eficiencia $O(\log n)$ del árbol.
+        
+        #El árbol queda organizado con los carros más caros y potentes en el extremo izquierdo.
         rbt.put(results_tree, key, sale)
+        # usa los criterios para quitar empates 
 
         total_price += price
         count += 1
@@ -332,7 +344,7 @@ def req_3(catalog, year, fuel_type, min_price, max_price):
         "sales": ordered_sales
     }
 
-
+#O(nlogn)
 
 def req_4(catalog, year, n):
     inicio = get_time()
@@ -374,6 +386,7 @@ def req_4(catalog, year, n):
     ]
 
     return resumen, format_req_4_data(top_models)
+#O(mlogm) siendo m el número de modelos distintos vendidos en el año dado, debido a la construcción del heap y la extracción de los top n modelos.
 
 def req_5(catalog, hp_ref, delta, top_n):
     start_time = get_time()
@@ -436,7 +449,7 @@ def req_6(catalog, year_min, year_max, price_min, price_max, m):
 
     model_data = {}
 
-    for sale in catalog["all_sales"]["elements"]:
+    for sale in catalog["all_sales"]["elements"]: #agrupa por autos que sí pasan el filtro de año y precio, para después sacar la media y desviación de cada modelo
         year = sale["year"]
         price = sale["base_price"]
 
@@ -447,12 +460,12 @@ def req_6(catalog, year_min, year_max, price_min, price_max, m):
 
         model = sale["model"]
 
-        if model not in model_data:
+        if model not in model_data: #CREA UN DICCIONARIO CON LOS MODELOS COMO LLAVE Y LOS PRECIOS, SUMA DE HP Y CONTADOR DE VENTAS COMO VALOR
             model_data[model] = {
                 "prices": [],
                 "horsepower_sum": 0,
                 "count": 0
-            }
+            } 
 
         model_data[model]["prices"].append(price)
         model_data[model]["horsepower_sum"] += sale["horsepower"]
@@ -461,7 +474,7 @@ def req_6(catalog, year_min, year_max, price_min, price_max, m):
     heap = pq.new_heap(True)
     total_models = 0
 
-    for model, data in model_data.items():
+    for model, data in model_data.items(): # me da parejas llave-valor para trabajarlas con ella una por una
         prices = data["prices"]
         n = data["count"]
 
@@ -478,17 +491,17 @@ def req_6(catalog, year_min, year_max, price_min, price_max, m):
 
         closest_sale = None
         min_diff = float("inf")
-
+# el for busca el auto real más cercano al promedio es decir la venta más representativa como dice el requerimiento
         for sale in catalog["all_sales"]["elements"]:
             if sale["model"] == model:
-                diff = abs(sale["base_price"] - mean)
-                if diff < min_diff:
+                diff = abs(sale["base_price"] - mean) #valor absoluto de la diferencia entre el precio de la venta y el precio promedio del modelo
+                if diff < min_diff: # la primera diferencia uq eencuentre siempre será menor que infinito
                     min_diff = diff
                     closest_sale = sale
 
         avg_hp = data["horsepower_sum"] / n
 
-        pq.insert(
+        pq.insert( #acá de hace el swim
             heap,
             stability,
             {
@@ -501,14 +514,16 @@ def req_6(catalog, year_min, year_max, price_min, price_max, m):
                 "representative": closest_sale
             }
         )
-
+        # o sea lo que hace es sacarla varianca desviacion estandar a todos y 
+        # después compararlos y hacer un heap para que haga un swim los menores 
+        # que son los que tienen menos desviación
         total_models += 1
 
     result = al.new_list()
     extracted = 0
 
     while extracted < m and not pq.is_empty(heap):
-        al.add_last(result, pq.remove(heap))
+        al.add_last(result, pq.remove(heap)) #sacas al "más estable" con pq.remove, el siguiente más estable suba automáticamente.
         extracted += 1
 
     exec_time = delta_time(start_time, get_time())
@@ -518,9 +533,16 @@ def req_6(catalog, year_min, year_max, price_min, price_max, m):
         "total_models": total_models,
         "models": result
     }
+    #Este bloque de código realiza la extracción selectiva de los resultados. En lugar de procesar toda
+    # la estructura, vaciamos el Min-Heap de forma controlada. Cada instrucción pq.remove desencadena un proceso de sink-down (hundimiento) 
+    # que garantiza que el siguiente modelo más estable siempre suba a la raíz, permitiéndonos construir
+    # una lista final perfectamente ordenada por estabilidad en un tiempo muy eficiente de $O(M \log M)$
 
 
+# Al final, mete los modelos en un Min-Heap para que los de precios más estables
+# floten hacia arriba y extrae los $m$ mejores para devolverlos ordenados.
 # Ordenamiento de carga
+#O(n*m)
 
 def compare_sales_load(s1, s2):
     if s1["year"] < s2["year"]:
@@ -601,7 +623,7 @@ def stats_req4(sale, model_stats):
         mc.put(value, "turbo", 0)
         mc.put(value, "best", None)
         mc.put(model_stats, modelo, value)
-   
+   # la llave es el nombre del modelo y el valor es un mapa con los numeros de ese modelo
     stats = mc.get(model_stats, modelo)
     mc.add_number(stats, "count", 1)
     mc.add_number(stats, "sum_price", sale["base_price"])
